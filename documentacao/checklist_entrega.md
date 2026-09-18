@@ -17,7 +17,7 @@ Confere o que foi pedido no enunciado (post do prof. Edilson Carlos Silva Lima, 
 | `README.md` com descrição do projeto | ✅ | `README.md` raiz, seção "Descrição do Projeto" |
 | `README.md` com tecnologias utilizadas | ✅ | `README.md` raiz, seção "Tecnologias Utilizadas" (tabela) |
 | `README.md` com guia de execução passo a passo (dependências, API local, banco, front) | ✅ | `README.md` raiz, seção "Guia de Execução (Passo a Passo)" |
-| Repositório no GitHub/GitLab | ⬜ pendente | Ainda não publicado |
+| Repositório no GitHub/GitLab | ✅ | https://github.com/Ruansunshine/chatIA-Instituto-Luz |
 | Rodar numa dupla/individual, sem apresentação de slides | — | Formato de entrega, não é código |
 | Apresentar funcionando ao professor no laboratório | ⬜ pendente | Data confirmada: 18/09/2026 (adiado do prazo original 11/09) |
 
@@ -41,5 +41,4 @@ Coisas que não eram exigidas e foram feitas mesmo assim:
 
 ## Pendências antes da entrega final
 
-1. Publicar o repositório no GitHub/GitLab.
-2. Confirmar ao vivo que `docker compose up -d --build` funciona numa máquina limpa antes da apresentação (ver US09 em `backlog.md`).
+1. Confirmar ao vivo que `docker compose up -d --build` funciona numa máquina limpa antes da apresentação (ver US09 em `backlog.md`).

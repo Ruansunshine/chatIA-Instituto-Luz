@@ -15,7 +15,7 @@ Detalhes e evidências (onde cada item está no código) em [`documentacao/check
 - [x] `README.md` com descrição do projeto
 - [x] `README.md` com tecnologias utilizadas
 - [x] `README.md` com guia de execução passo a passo
-- [ ] Repositório publicado no GitHub/GitLab
+- [x] Repositório publicado no GitHub/GitLab (https://github.com/Ruansunshine/chatIA-Instituto-Luz)
 - [ ] Apresentação funcionando ao professor no laboratório
 
 ## Além do mínimo
