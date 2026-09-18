@@ -1,0 +1,17 @@
+# Node
+node_modules/
+bun.lock.tmp
+
+# Python
+__pycache__/
+*.pyc
+
+# Ambiente local (usar .env.example como referência)
+.env
+
+# Logs
+*.log
+
+# Editor/SO
+.DS_Store
+Thumbs.db

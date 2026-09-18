@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Instituto Luz — Chat (E2E de teste)</title>
+
+<style>
+
+  :root {
+
+    --forest: #1E5C1F;
+
+    --forest-dark: #143E15;
+
+    --gold: #E8A020;
+
+    --bg: #F4F6F4;
+
+    --card: #FFFFFF;
+
+    --text: #1F2A1F;
+
+    --muted: #6B7A6B;
+
+    --border: #E1E7E1;
+
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+
+    margin: 0;
+
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+
+    background: var(--bg);
+
+    color: var(--text);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 100vh;
+
+    padding: 16px;
+
+  }
+
+  .widget {
+
+    width: 100%;
+
+    max-width: 420px;
+
+    background: var(--card);
+
+    border-radius: 16px;
+
+    box-shadow: 0 10px 40px rgba(30, 92, 31, 0.15);
+
+    overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+    height: 640px;
+
+  }
+
+  .topbar {
+
+    height: 4px;
+
+    background: linear-gradient(90deg, var(--forest), var(--gold));
+
+  }
+
+  header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 14px 18px;
+
+    border-bottom: 1px solid var(--border);
+
+  }
+
+  header .brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-weight: 700;
+
+    font-size: 15px;
+
+  }
+
+  header .brand .icon {
+
+    width: 30px;
+
+    height: 30px;
+
+    border-radius: 8px;
+
+    background: var(--forest);
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 15px;
+
+  }
+
+  .status-dots {
+
+    display: flex;
+
+    gap: 6px;
+
+    font-size: 10px;
+
+    color: var(--muted);
+
+  }
+
+  .dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #ccc;
+
+    display: inline-block;
+
+  }
+
+  .dot.ok { background: #2f9e44; }
+
+  .dot.fail { background: #e03131; }
+
+  .session-id {
+
+    font-family: monospace;
+
+    opacity: 0.7;
+
+  }
+
+
+
+  .intro {
+
+    padding: 20px 18px 8px;
+
+  }
+
+  .intro h1 {
+
+    font-size: 17px;
+
+    margin: 0 0 6px;
+
+  }
+
+  .intro p {
+
+    font-size: 13px;
+
+    color: var(--muted);
+
+    margin: 0 0 14px;
+
+    line-height: 1.4;
+
+  }
+
+  .chips {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+
+    padding: 0 18px 12px;
+
+  }
+
+  .chip {
+
+    border: 1px solid var(--border);
+
+    background: #FAFBFA;
+
+    border-radius: 10px;
+
+    padding: 10px;
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    color: var(--text);
+
+  }
+
+  .chip:hover {
+
+    border-color: var(--gold);
+
+    background: #FFF9EF;
+
+  }
+
+
+
+  .messages {
+
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 12px 18px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+  }
+
+  .msg {
+
+    max-width: 85%;
+
+    padding: 10px 12px;
+
+    border-radius: 12px;
+
+    font-size: 13.5px;
+
+    line-height: 1.4;
+
+  }
+
+  .msg.user {
+
+    align-self: flex-end;
+
+    background: var(--forest);
+
+    color: white;
+
+    border-bottom-right-radius: 4px;
+
+  }
+
+  .msg.bot {
+
+    align-self: flex-start;
+
+    background: #F0F3F0;
+
+    color: var(--text);
+
+    border-bottom-left-radius: 4px;
+
+  }
+
+  .msg .fonte {
+
+    display: block;
+
+    margin-top: 6px;
+
+    font-size: 11px;
+
+    color: var(--muted);
+
+  }
+
+  .msg.system {
+
+    align-self: center;
+
+    background: transparent;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+  }
+
+  .msg.bot.digitando::after {
+
+    content: "";
+
+    display: inline-block;
+
+    width: 6px;
+
+    height: 6px;
+
+    margin-left: 2px;
+
+    border-radius: 50%;
+
+    background: var(--muted);
+
+    animation: pisca 1s infinite;
+
+  }
+
+  @keyframes pisca {
+
+    0%, 100% { opacity: 0.2; }
+
+    50% { opacity: 1; }
+
+  }
+
+
+
+  form {
+
+    display: flex;
+
+    gap: 8px;
+
+    padding: 12px 14px;
+
+    border-top: 1px solid var(--border);
+
+  }
+
+  input[type="text"] {
+
+    flex: 1;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 10px 12px;
+
+    font-size: 13.5px;
+
+    outline: none;
+
+  }
+
+  input[type="text"]:focus {
+
+    border-color: var(--forest);
+
+  }
+
+  button {
+
+    background: var(--forest);
+
+    color: white;
+
+    border: none;
+
+    border-radius: 10px;
+
+    width: 40px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+  }
+
+  button:hover { background: var(--forest-dark); }
+
+  button:disabled { background: #aaa; cursor: not-allowed; }
+
+
+
+  .disclaimer {
+
+    text-align: center;
+
+    font-size: 10.5px;
+
+    color: var(--muted);
+
+    padding: 0 14px 12px;
+
+  }
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<div class="widget">
+
+  <div class="topbar"></div>
+
+  <header>
+
+    <div class="brand">
+
+      <span class="icon">IL</span>
+
+      <span>Instituto Luz — Assistente</span>
+
+    </div>
+
+    <div class="status-dots">
+
+      <span>node <span id="dot-node" class="dot"></span></span>
+
+      <span>ia <span id="dot-python" class="dot"></span></span>
+
+      <span id="session-id-label" class="session-id" title=""></span>
+
+    </div>
+
+  </header>
+
+
+
+  <div class="intro">
+
+    <h1>O que você quer saber?</h1>
+
+    <p>Sou o assistente virtual do Instituto Luz. Posso te ajudar com especialidades, preços, políticas e disponibilidade de horário.</p>
+
+  </div>
+
+
+
+  <div class="chips">
+
+    <button class="chip" data-q="Quais especialidades vocês atendem?">Especialidades</button>
+
+    <button class="chip" data-q="Quanto custa um pacote de sessões?">Preços e pacotes</button>
+
+    <button class="chip" data-q="Qual a política de cancelamento?">Cancelamento</button>
+
+    <button class="chip" data-q="Tem horário disponível essa semana?">Disponibilidade</button>
+
+  </div>
+
+
+
+  <div class="messages" id="messages">
+
+    <div class="msg system" id="boot-status">Conectando com a API...</div>
+
+  </div>
+
+
+
+  <form id="chat-form">
+
+    <input type="text" id="pergunta" placeholder="Digite sua pergunta..." autocomplete="off" />
+
+    <button type="submit">&#8593;</button>
+
+  </form>
+
+  <div class="disclaimer">As respostas são geradas por IA local e podem conter erros. Não substitui orientação profissional.</div>
+
+</div>
+
+
+
+<script>
+
+  // Harness minimo pra testar e2e (front -> node -> python) enquanto o
+
+  // template real (chat/documentacao/pbi/frontend/template.md) nao vira
+
+  // React de verdade. Sem build step, so abrir num servidor estatico local.
+
+  const API_URL = window.API_URL || "http://localhost:4000";
+
+
+
+  // Um id por aba/sessao - permite o backend buscar o historico da MESMA
+
+  // conversa pra responder follow-up com contexto. So dura a sessao do
+
+  // navegador (sessionStorage), nao precisa persistir mais que isso.
+
+  function obterSessionId() {
+
+    try {
+
+      let id = sessionStorage.getItem("chat_session_id");
+
+      if (!id) {
+
+        id = crypto.randomUUID();
+
+        sessionStorage.setItem("chat_session_id", id);
+
+      }
+
+      return id;
+
+    } catch (e) {
+
+      return crypto.randomUUID();
+
+    }
+
+  }
+
+  const SESSION_ID = obterSessionId();
+
+  // Mostra os 8 primeiros caracteres do sessionId no header - so' pra provar
+  // ao vivo (demonstracao/TDE) que a memoria de conversa e' de verdade
+  // (mesmo id persiste entre perguntas na mesma aba, puxa historico real do
+  // MySQL). UUID completo fica no title (tooltip ao passar o mouse).
+  const sessionIdLabel = document.getElementById("session-id-label");
+  if (sessionIdLabel) {
+    sessionIdLabel.textContent = "sessão " + SESSION_ID.slice(0, 8);
+    sessionIdLabel.title = SESSION_ID;
+  }
+
+
+
+  const messagesEl = document.getElementById("messages");
+
+  const bootStatusEl = document.getElementById("boot-status");
+
+  const dotNode = document.getElementById("dot-node");
+
+  const dotPython = document.getElementById("dot-python");
+
+  const form = document.getElementById("chat-form");
+
+  const input = document.getElementById("pergunta");
+
+
+
+  function addMessage(text, who, fonte) {
+
+    const div = document.createElement("div");
+
+    div.className = "msg " + who;
+
+    div.textContent = text;
+
+    if (fonte) {
+
+      const small = document.createElement("span");
+
+      small.className = "fonte";
+
+      small.textContent = "Fonte: " + fonte;
+
+      div.appendChild(small);
+
+    }
+
+    messagesEl.appendChild(div);
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  }
+
+
+
+  // Restaura a conversa visivel apos um refresh - a IA ja lembra (mesmo
+  // SESSION_ID no sessionStorage + historico no MySQL), mas sem isso a TELA
+  // ficava vazia de novo, dando a impressao (falsa) de que a memoria se
+  // perdeu. Mesma janela (ultimas 4 trocas) que o Ollama recebe como contexto.
+  async function carregarHistorico() {
+    try {
+      const res = await fetch(`${API_URL}/chat/historico?sessionId=${SESSION_ID}`);
+      const body = await res.json();
+      if (!body.success || !Array.isArray(body.historico)) return;
+      for (const troca of body.historico) {
+        addMessage(troca.pergunta, "user");
+        addMessage(troca.resposta, "bot");
+      }
+    } catch (e) {
+      // sem historico anterior ou API fora do ar - segue com a tela em branco
+    }
+  }
+
+  async function checkHealth() {
+
+    try {
+
+      const res = await fetch(`${API_URL}/health`);
+
+      const body = await res.json();
+
+      dotNode.classList.add(body.success ? "ok" : "fail");
+
+    } catch (e) {
+
+      dotNode.classList.add("fail");
+
+    }
+
+
+
+    try {
+
+      const res = await fetch(`${API_URL}/health/python`);
+
+      const body = await res.json();
+
+      dotPython.classList.add(body.reachable ? "ok" : "fail");
+
+    } catch (e) {
+
+      dotPython.classList.add("fail");
+
+    }
+
+
+
+    bootStatusEl.textContent =
+
+      dotNode.classList.contains("ok") && dotPython.classList.contains("ok")
+
+        ? "Conectado: Node + IA (Python) respondendo."
+
+        : "Atencao: nem todos os servicos responderam (ver bolinhas no topo).";
+
+  }
+
+
+
+  async function enviarPergunta(pergunta) {
+
+    addMessage(pergunta, "user");
+
+    const bolha = document.createElement("div");
+
+    bolha.className = "msg bot digitando";
+
+    bolha.textContent = "";
+
+    messagesEl.appendChild(bolha);
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+
+
+    // Nao da pra encurtar o tempo real (CPU sem GPU, ver escopo.md), mas da
+
+    // pra melhorar a PERCEPCAO - mensagem que muda em estagios parece mais
+
+    // "vivo" que uma frase estatica parada por 40-70s. So avisa, nunca corta
+
+    // a espera - o timeout de verdade (que corta) e' no backend (Node/Python).
+
+    const ESTAGIOS_ESPERA = [
+      { emMs: 20000, texto: "Calculando na CPU (sem GPU disponível) - por isso a demora..." },
+      { emMs: 60000, texto: "Ainda calculando, modelo local sem aceleração de GPU..." },
+      { emMs: 90000, texto: "Pergunta mais complexa - pode levar alguns minutos nessa CPU..." },
+      { emMs: 180000, texto: "Ainda trabalhando nisso, não travou - só demora mesmo sem GPU..." },
+    ];
+    const timersEspera = ESTAGIOS_ESPERA.map(({ emMs, texto }) =>
+      setTimeout(() => {
+
+        bolha.textContent = texto;
+
+      }, emMs)
+
+    );
+
+    const limparTimersEspera = () => timersEspera.forEach(clearTimeout);
+
+
+
+    try {
+
+      const res = await fetch(`${API_URL}/chat`, {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({ pergunta, sessionId: SESSION_ID }),
+
+      });
+
+
+
+      if (res.status === 404) {
+
+        limparTimersEspera();
+
+        bolha.classList.remove("digitando");
+
+        bolha.textContent =
+
+          "POST /chat ainda nao existe no backend (PBI-B11). Esse harness ja esta pronto pra quando existir.";
+
+        return;
+
+      }
+
+
+
+      const fontes = res.headers.get("X-Fontes");
+
+      const reader = res.body.getReader();
+
+      const decoder = new TextDecoder();
+
+      let acumulado = "";
+
+
+
+      while (true) {
+
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        limparTimersEspera();
+
+        if (acumulado === "") bolha.classList.remove("digitando");
+
+        acumulado += decoder.decode(value, { stream: true });
+
+        bolha.textContent = acumulado;
+
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      }
+
+
+
+      limparTimersEspera();
+
+      bolha.classList.remove("digitando");
+
+      if (fontes) {
+
+        const small = document.createElement("span");
+
+        small.className = "fonte";
+
+        small.textContent = "Fonte: " + fontes;
+
+        bolha.appendChild(small);
+
+      }
+
+    } catch (e) {
+
+      limparTimersEspera();
+
+      bolha.classList.remove("digitando");
+
+      bolha.textContent = "Erro ao chamar a API: " + e.message;
+
+    }
+
+  }
+
+
+
+  form.addEventListener("submit", (e) => {
+
+    e.preventDefault();
+
+    const pergunta = input.value.trim();
+
+    if (!pergunta) return;
+
+    input.value = "";
+
+    enviarPergunta(pergunta);
+
+  });
+
+
+
+  document.querySelectorAll(".chip").forEach((chip) => {
+
+    chip.addEventListener("click", () => enviarPergunta(chip.dataset.q));
+
+  });
+
+
+
+  carregarHistorico();
+  checkHealth();
+
+</script>
+
+
+
+</body>
+
+</html>
+

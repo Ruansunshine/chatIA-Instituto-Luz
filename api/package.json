@@ -1,0 +1,21 @@
+{
+  "name": "instituto-luz-chat-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "start": "bun index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.0",
+    "drizzle-orm": "^0.36.4",
+    "elysia": "^1.2.10",
+    "mysql2": "^3.11.5"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.1",
+    "@types/bun": "latest"
+  }
+}

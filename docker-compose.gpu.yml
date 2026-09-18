@@ -1,0 +1,21 @@
+# Override OPCIONAL pra ativar GPU NVIDIA no Ollama - o docker-compose.yml
+# principal continua funcionando sem GPU em qualquer maquina (nao mexi nele
+# de proposito, pra nao quebrar em maquina sem GPU, ex: a maquina onde isso
+# foi desenvolvido).
+#
+# Uso (na maquina com GPU NVIDIA):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+#
+# Pre-requisito NO HOST (fora do Docker, uma vez so): NVIDIA Container
+# Toolkit instalado (https://github.com/NVIDIA/nvidia-container-toolkit) -
+# sem isso o Docker nao consegue enxergar a GPU de dentro do container,
+# mesmo com esse override.
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

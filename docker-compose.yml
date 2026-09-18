@@ -1,0 +1,168 @@
+# docker-compose.yml
+# Trabalho de Sistemas Inteligentes - Base de Conhecimento com IA Generativa.
+# `docker compose up -d --build` sobe tudo do zero (mysql, flyway, ollama com
+# pull automatico do modelo, chroma, backend-node, backend-python, frontend)
+# sem passo manual.
+services:
+  mysql:
+    image: mysql:8
+    container_name: chatia-mysql
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  flyway:
+    # 11 (nao 10) - a tag 10-alpine so publica imagem amd64, sem arm64. O
+    # professor roda numa maquina Snapdragon X (ARM64) - sem essa troca, o
+    # docker compose up dele precisaria emular essa camada via QEMU (lento,
+    # pode falhar) logo na migracao do banco, antes de qualquer outro
+    # servico subir. 11-alpine ja publica linux/arm64 nativo (confirmado via
+    # docker buildx imagetools inspect); sintaxe SQL das migracoes V1-V3 nao
+    # muda entre as versoes.
+    image: flyway/flyway:11-alpine
+    container_name: chatia-flyway
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      FLYWAY_URL: ${FLYWAY_URL}
+      FLYWAY_USER: ${FLYWAY_USER}
+      FLYWAY_PASSWORD: ${FLYWAY_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+    volumes:
+      - ./api/db/migration:/flyway/sql:ro
+    command: ["-connectRetries=60", "migrate"]
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chatia-ollama
+    restart: unless-stopped
+    # peso relativo de CPU entre os containers (padrao de todo mundo e'
+    # 1024) - o Ollama e' de longe quem mais precisa de CPU aqui (geracao
+    # de texto), entao ganha prioridade quando o host estiver ocupado com
+    # outra coisa (navegador, IDE etc). Nao reserva CPU exclusiva (isso o
+    # Docker nao faz de graca), so da vantagem em caso de disputa.
+    cpu_shares: 2048
+    environment:
+      # sem isso o modelo (2.6GB) descarrega da RAM apos ociosidade curta -
+      # a proxima pergunta paga de novo o custo de carregar do disco (~28s
+      # medidos na pratica). O Python tambem manda keep_alive por chamada
+      # (ver chat/ia/main.py), isso aqui e' o padrao do servidor.
+      OLLAMA_KEEP_ALIVE: 30m
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # roda uma vez, baixa o modelo local e sai - garante que o `up -d --build`
+  # deixa tudo pronto sem passo manual (ver escopo.md).
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: chatia-ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["sh", "-c", "ollama pull ${OLLAMA_MODEL}"]
+    restart: "no"
+
+  chroma:
+    # versao fixa (nao ":latest") - client Python fica preso a chromadb==1.0.15
+    # em requirements.txt, um "latest" que mudar de versao quebra o protocolo
+    # entre client/servidor (ja aconteceu: client 0.6.3 x servidor 1.0 deu erro).
+    image: chromadb/chroma:1.0.0
+    container_name: chatia-chroma
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: development
+    container_name: chatia-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    env_file: .env
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      HOST: ${HOST}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      DATABASE_URL: ${DATABASE_URL}
+      PYTHON_SERVICE_URL: ${PYTHON_SERVICE_URL}
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: ["sh", "-lc", "bun install && bun --hot index.ts"]
+
+  backend-python:
+    build:
+      context: ./ia
+      dockerfile: Dockerfile
+    container_name: chatia-python
+    restart: unless-stopped
+    # tambem faz calculo de CPU (embedding do ChromaDB na ingestao/busca) -
+    # nao tanto quanto o Ollama, mas um pouco acima do padrao (1024).
+    cpu_shares: 1536
+    depends_on:
+      chroma:
+        condition: service_started
+    env_file: .env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ia:/app
+      # cache do modelo de embedding (ONNX, ~80MB) - sem isso, cada rebuild
+      # baixa de novo, atrasando toda subida do container.
+      - chroma_model_cache:/root/.cache/chroma
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: chatia-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # 5500 - mesma porta que já estava liberada no CORS_ORIGINS (.env) de
+      # quando isso rodava manual via "python -m http.server 5500".
+      - "5500:80"
+
+volumes:
+  mysql_data:
+  ollama_data:
+  chroma_data:
+  chroma_model_cache:
